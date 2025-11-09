@@ -4,6 +4,16 @@ A Retrieval-Augmented Generation (RAG) prototype using Gemini embeddings, Postgr
 
 ---
 
+# Output
+
+![out](./output/1.png)
+
+![out](./output/2.png)
+
+![out](./output/3.png)
+
+---
+
 ## Features
 
 - Load PDF documents and split them into chunks

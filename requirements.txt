@@ -1,8 +1,24 @@
+# --- Core Backend ---
+fastapi
+uvicorn
 python-dotenv
+orjson
+
+# --- LangChain & Integrations ---
 langchain
-langchain-huggingface
-langchain-postgres
-langchain-community
 langchain-core
+langchain-community
+langchain-huggingface
+langchain-google-genai
+
+# --- Embeddings & Vector Store ---
+sentence-transformers
+faiss-cpu
+
+# --- Database / Cache ---
+diskcache
+
+
+# --- File & Data Handling ---
 pypdf
-psycopg2-binary
+numpy
