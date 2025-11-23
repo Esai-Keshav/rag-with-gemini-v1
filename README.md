@@ -1,146 +1,78 @@
-# RAG model with Gemini and PGVector
+# RAG with Gemini v1
 
-A Retrieval-Augmented Generation (RAG) prototype using Gemini embeddings, PostgreSQL vector store (PGVector), and LangChain. The system loads PDFs, embeds chunks, stores them, and supports question-answering via retrieval + generation.
-
----
-
-# Output
-
-![out](./output/1.png)
-
-![out](./output/2.png)
-
-![out](./output/3.png)
-
----
+This project is a Retrieval-Augmented Generation (RAG) prototype that leverages Gemini embeddings, a PostgreSQL vector store (PGVector), and LangChain. It's designed to load PDF documents, embed their content, store these embeddings, and provide a question-answering system by retrieving relevant information and generating responses using a Language Model.
 
 ## Features
 
-- Load PDF documents and split them into chunks
-- Compute embeddings (via Gemini or HuggingFace)
-- Store embeddings and metadata in PostgreSQL using PGVector
-- Build a retrieval + generation chain (RAG) using LangChain
-- Ability to ask questions over the loaded documents
-- Represents a minimal scaffold to extend further (e.g. add caching, streaming, memory)
-
----
-
-## Architecture & How It Works
-
-Here’s a high-level flow of operations:
-
-1. **Document ingestion**
-
-   - Use `PyPDFLoader` (from `langchain-community.document_loaders`) to load PDFs and extract page-level text.
-   - Possibly split long pages or long texts into overlapping chunks (so that embeddings are more granular).
-
-2. **Embedding generation**
-
-   - Use a embeddings model (e.g. via `HuggingFaceEmbeddings` or a Gemini embedding API) to convert each text chunk into a vector representation.
-
-3. **Storage**
-
-   - Use **PGVector** (via `langchain_postgres.PGVector`) to store the embedding vectors, along with metadata (document id, chunk id, text content).
-   - PostgreSQL serves as the vector database + relational metadata store.
-
-4. **Retriever / Querying**
-
-   - When a user submits a question, the system embeds the question, then queries the vector store (PGVector) for the top-k most similar document chunks (by vector similarity).
-   - Retrieve those relevant document chunks.
-
-5. **Generation / Answering**
-
-   - Combine the retrieved chunks as “context” and pass them (with an LLM / prompt template) to generate the final answer.
-   - Use a chain in LangChain (e.g. a “stuff” chain, or a more advanced chain) to combine the context and the question.
-
-Thus, the “augmentation” is the retrieval of external knowledge (the documents) to ground the generation, rather than relying only on the language model's internal knowledge.
-
-A simplified representation:
-
-```
-PDFs → chunks → embeddings → PGVector
-User question → embed question → similarity search → top chunks → feed to LLM → answer
-```
-
-You already import `create_retrieval_chain`, `create_stuff_documents_chain`, and `ChatPromptTemplate`, so presumably your code wires up a LangChain pipeline of (retriever + generation) using a prompt template.
-
----
+-   **Document Ingestion:** Loads and chunks PDF documents.
+-   **Embedding Generation:** Converts text chunks into vector representations using Gemini embeddings.
+-   **Vector Storage:** Stores embeddings and metadata in PostgreSQL with the `pgvector` extension.
+-   **Retrieval-Augmented Generation (RAG):** Answers user questions by retrieving relevant document chunks and feeding them to an LLM for generation.
 
 ## Installation & Setup
 
-Here’s a step-by-step guide for installing & running your project locally.
-
 ### Prerequisites
 
-- Python 3.8 / 3.9 / 3.10 (or a version compatible with your dependencies)
-- PostgreSQL instance with `pgvector` extension enabled
-- Access / credentials for Gemini embedding / LLM API (if using Gemini)
-- `git`
+-   Python 3.8+
+-   PostgreSQL with `pgvector` extension enabled
+-   Gemini API Key
 
----
+### Gemini API Key Setup
 
-## Gemini API Key Setup
+Obtain a Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey) and add it to a `.env` file in the project root:
 
-To use **Gemini embeddings or LLM**, you must set up your Gemini API key:
-
-1. Go to the [Google AI Studio](https://aistudio.google.com/app/apikey) and sign in with your Google account.
-
-2. Click **Create API key** to generate a new key.
-
-3. Copy the key and store it in your `.env` file as:
-
-   ```bash
-   GEMINI_API_KEY=your_gemini_key_here
-   ```
-
-4. You can also export it directly in your terminal (for temporary sessions):
-
-   ```bash
-   export GEMINI_API_KEY=your_gemini_key_here
-   ```
-
----
+```
+GEMINI_API_KEY=your_gemini_key_here
+```
 
 ### Steps
 
-1. **Clone the repository**
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/Esai-Keshav/rag-with-gemini-v1.git
+    cd rag-with-gemini-v1
+    ```
 
-   ```bash
-   git clone https://github.com/Esai-Keshav/rag-with-gemini-v1.git
-   cd rag-with-gemini-v1
-   ```
+2.  **Create a virtual environment (recommended):**
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate # Linux / macOS
+    # venv\Scripts\activate # Windows
+    ```
 
-2. **Create a virtual environment (recommended)**
+3.  **Install backend dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate   # on Linux / macOS
-   # or `venv\Scripts\activate` on Windows
-   ```
+4.  **Install frontend dependencies:**
+    ```bash
+    cd frontend
+    npm install
+    cd ..
+    ```
 
-3. **Install dependencies**
+## Usage
 
-   You should already have a `requirements.txt` :
+### Backend
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+To start the backend API:
+```bash
+python backend/main.py
+```
 
-Flow:
+### Frontend
 
-- You load PDFs → chunk them → embed + store
-- Query comes in → you retrieve top chunks
-- Combine with prompt → send to LLM → answer
+To start the frontend development server:
+```bash
+cd frontend
+npm run dev
+```
 
----
+## Output Examples
 
-## Limitations & Future Work
+Here are some examples of the system's output:
 
-- **Memory / context limits**: If documents are very large, combining all chunks may exceed model context window
-- **Latency**: Embedding + retrieval + generation may take non-trivial time
-- **Hallucination risk**: The LLM may still hallucinate beyond the retrieved context
-- **No caching / incremental ingest**: You may want to add caching, incremental updates, or document versioning
-- **Better chain types**: Rather than “stuff”, consider “map-reduce” or “refine” chains
-- **Multi-modal support**: If PDFs include images / tables, you might support visual embedding + multimodal RAG
-- **Scalability & vector DB choice**: For larger scale, consider Milvus, Weaviate, Pinecone instead of PGVector
-- **Prompt tuning & fallback: in case no relevant chunks found**
+![Output 1](./output/1.png)
+![Output 2](./output/2.png)
+![Output 3](./output/3.png)
